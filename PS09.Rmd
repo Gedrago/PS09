@@ -34,69 +34,83 @@ Please indicate who you collaborated with on this assignment:
 
 ```{r}
 observations_1 <- read_csv("data/observations_1.csv")
-
-plot(observations_1$x1,observations_1$x2)
 observations_2 <- read_csv("data/observations_2.csv")
 
-#plot(observations_2$x1,observations_2$x2)
- 
-
-# Set observations to be one of two datasets
-observations <- observations_1
- 
-
-# Fit model for k=2
- 
-k <- 2
-k_means_results$iter = 10
-k_means_results <- kmeans(observations,centers=k, iter.max = 10  )
-clusters <- k_means_results$cluster
-
-cluster_centers <- k_means_results$centers
-
-
-
-# Add cluster results to observations. Note we convert to factor since cluster
-# ID's should be treated as categorical
-observations$cluster <- as.factor(clusters)
-
-# Add cluster ID's to cluster_centers
-cluster_centers <- cluster_centers %>% 
-  as_tibble() %>% 
-  mutate(cluster=as.factor(1:k))
-
-ggplot(NULL, aes(x=x1, y=x2, col=cluster)) +
-  geom_point(data=observations) +
-  geom_point(data=cluster_centers, size=5)
+dim(observations_1)
+dim(observations_2)
 ```
 
+
 ```{r}
-observations <- observations_2
+cluster_center_list <- list()
+mutated_observation_list <- list()
+set.seed(1002)
+for (i in 1:10){
+  k <- 2
+  k_means_results <- kmeans(observations_1, centers = k)
+  clusters <- k_means_results$cluster
+  cluster_centers <- k_means_results$centers
+  
+  # Add cluster results to observations. Note we convert to factor since cluster
+  # ID's should be treated as categorical
+  dataframe <- data.frame(x1 = observations_1[,1], x2 = observations_1[,2], cluster = as.factor(clusters))
+  mutated_observation_list[[i]] <- dataframe
 
-plot(observations_2$x1,observations_2$x2)
-# Fit model for k=2
- 
-k <- 2
-k_means_results$iter = 10
-k_means_results <- kmeans(observations,centers=k, iter.max = 10  )
-clusters <- k_means_results$cluster
+  # Add cluster ID's to cluster_centers
+  cluster_centers <- cluster_centers %>% 
+    as_tibble() %>% 
+    mutate(cluster=as.factor(1:k))
+  cluster_center_list[[i]] <- cluster_centers
+}
 
-cluster_centers <- k_means_results$centers
+plots <- list()
+
+for (i in 1:10){
+  plot <- ggplot(NULL, aes(x=x1, y=x2, col=cluster)) +
+  geom_point(data=mutated_observation_list[[i]]) +
+  geom_point(data=cluster_center_list[[i]], size=5)
+  
+  plots[[i]] <- plot
+}
+
+cowplot::plot_grid(plotlist = plots, nrow = 5, ncol = 2)
+```
 
 
 
-# Add cluster results to observations. Note we convert to factor since cluster
-# ID's should be treated as categorical
-observations$cluster <- as.factor(clusters)
+```{r}
+cluster_center_list <- list()
+mutated_observation_list <- list()
+set.seed(1002)
+for (i in 1:10){
+  k <- 2
+  k_means_results <- kmeans(observations_2, centers = k)
+  clusters <- k_means_results$cluster
+  cluster_centers <- k_means_results$centers
+  
+  # Add cluster results to observations. Note we convert to factor since cluster
+  # ID's should be treated as categorical
+  dataframe <- data.frame(x1 = observations_1[,1], x2 = observations_1[,2], cluster = as.factor(clusters))
+  mutated_observation_list[[i]] <- dataframe
 
-# Add cluster ID's to cluster_centers
-cluster_centers <- cluster_centers %>% 
-  as_tibble() %>% 
-  mutate(cluster=as.factor(1:k))
+  # Add cluster ID's to cluster_centers
+  cluster_centers <- cluster_centers %>% 
+    as_tibble() %>% 
+    mutate(cluster=as.factor(1:k))
+  cluster_center_list[[i]] <- cluster_centers
+}
 
-ggplot(NULL, aes(x=x1, y=x2, col=cluster)) +
-  geom_point(data=observations) +
-  geom_point(data=cluster_centers, size=5)
+plots <- list()
+
+for (i in 1:10){
+  plot <- ggplot(NULL, aes(x=x1, y=x2, col=cluster)) +
+  geom_point(data=mutated_observation_list[[i]]) +
+  geom_point(data=cluster_center_list[[i]], size=5)
+  
+  plots[[i]] <- plot
+}
+
+cowplot::plot_grid(plotlist = plots, nrow = 5, ncol = 2)
 ```
 
 
@@ -115,11 +129,13 @@ results.
 
 **Answers**:
 
-1. The graph shows that there is a low variation within cluster while there is also low variation between the two clusters. This makes the kmc less efficient because we cant distinguish between clusters that distinctly. 
-1.The result on the graph is caused by the 'random' relationship that the two x1 and x2 variables have. We can look at our first plot of x1 vs x2 where we see the randomness and scattering of the points everywhere which causes for the clusters to not be defined well.  
-1.The graph shows that there is a low variation within cluster while there is also high variation between the two clusters. This makes the kmc of 'observation_2' more efficient because we can distinguish between clusters distinctly. 
-1. When we take a look at the normal plot of the x1 and x2 variables on a graph, we can clear see a linear relationship between the two variables. We also can see two clusters on the plot before looking at the plot from kmc, where one is at the top right and the other is on left bottom. Thus, the relatively well defined clusters in kmc for observation 2 is caused by the linear relationship the two variables x1 and x2 have. 
+1. The graph shows that the clusters and the centroid of the `observations_1` are constantly changing, thus KMX of `observations_1` is inconsistent. 
 
+1.The result on the graph is caused by the 2b part of the KMC algorithm ( '2)b Assign each observation to the cluster whose centroid is closest (where closest is defined using Euclidean distance).'). Since the graph of the points are very spread out and distances between points is fairly the same for throughout the graph, the centroid keeps getting moved back and forward. 
+
+1. The second graph shows that the each cluster seem to contain the roughly the same data points and the graph also shows the the centroid stays at the same place through the iteration , therefore the KMC of  `observations_2` is consistent. 
+ 
+1. The result on the graph is caused by the 2b part of the KMC algorithm ( '2)b Assign each observation to the cluster whose centroid is closest (where closest is defined using Euclidean distance).'). There is a higher distance between points of the two clusters and closer distance between points within the cluster, therefore the centroid tends to stay in the same vicinity. 
 
 
 # Bonus question: Code your own
@@ -148,6 +164,10 @@ apply(distance_matrix, 1, which.min)
 
 #assign numbers from 1 to K , to each of the observations 
  
+
+
+
+
 ```
 
 
